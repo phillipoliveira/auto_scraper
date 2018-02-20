@@ -1,0 +1,90 @@
+.page-form {
+    margin-top: 25px;
+    max-width: 480px;
+    border-style: solid;
+    border-width: 5px;
+    border-color: white;
+    padding: 25px 25px 25px 25px
+}
+.form-button {
+    margin-left: 100px;
+    margin-right:100px;
+    text-align: center;
+}
+.heading {
+    text-align: center;
+}
+body {
+    background-color: #1C1C1C;
+    color: white;
+}
+.account_link {
+    margin-top: 15px;
+    text-align: center;
+}
+a:hover{
+    text-decoration: none;
+    color: #D2D2D2;
+}
+a {
+    text-decoration: none;
+    color: white;
+}
+hr {
+    border: 0;
+    height: 1px;
+    background: #333;
+    background-image: linear-gradient(to right, #ccc, #333, #ccc);
+    color: white;
+}
+#no_posts {
+    margin-top: 25px;
+}
+.page_title{
+    margin-top: 25px;
+}
+.margin-top {
+    margin-top: 10px;
+}
+.edit_button_cont{
+    margin-right: 66px;
+    width: 10%;
+    float: right;
+    padding-bottom: 10px;
+}
+.edit_button{
+    left: 90%
+}
+.create-button {
+    max-width: 300px;
+}
+.left_button{
+    width: 210px;
+    padding-right: 5px;
+    margin-top: 25px;
+}
+.right_button{
+    width: 210px;
+    padding-left: 5px;
+    margin-top: 25px;
+}
+.page_top_left_button{
+    width: 300px;
+    float: left;
+    margin-top: 100px;
+}
+.pull_page{
+    margin-left: 100px;
+}
+.pulls{
+    float: left;
+    margin-top: 100px;
+}
+.post_buttons{
+    margin-left: 10px;
+    float: right;
+}
+img.align-self-start {
+    min-width: 300px;
+    max-height: 200px;
+}

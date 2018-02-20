@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <br><br>
+    <h3>Starred Posts:  {{ posts|length }}</h3><br>
+    {% if posts|length > 0 %}
+        {% for post in posts %}
+            <div class="media">
+                <img class="align-self-start mr-3" src={{ post.image }}>
+            <div class="media-body">
+                <div class="post_buttons">
+                    <a href="/flags/star/False/{{ post._id }}/starred_posts.html" class="btn btn-success btn-lg" role="button" aria-pressed="true">Un-star</a>
+                </div>
+                <h5><b>Price:</b> {{ post.prices[0] }}</h5>
+                {% if post.prices|length > 1 %}
+                    <p><b>Price history:</b>
+                    {% for price in post.prices[1:] %}
+                        {{ price }}</p>
+                    {% endfor %}
+                {% endif %}
+                <b>Location:</b> {{ post.location }}<br>
+                <b>For sale by:</b> {{ post.seller }}<br>
+                <b>Mileage:</b> {{ post.kms }}<br>
+                <b>Date Posted:</b> {{ post.date_posted }}<br>
+                <b>Transmission:</b> {{ post.transmission }}<br>
+                <br><br>
+                <hr>
+            </div>
+            </div>
+        <!-- <hr> = horizontal rule, basically a line between blogs -->
+        {% endfor %}
+    {% else %}
+        <h3>You haven't starred any posts!</h3>
+    {% endif %}
+ </div>
+{% endblock %}

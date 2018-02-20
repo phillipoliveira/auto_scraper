@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container page-form">
+<!-- this div HAS TWO CLASSES - it is used so we can modify this section's style in our css-->
+    <form id="login-form" action="/pulls/final/{{ make }}/{{ model }}/{{ pull_id }}">
+        <div class="heading">
+            <h2>Select a body type:</h2>
+        </div>
+            <label for="body_types">You're almost done...:</label>
+            <select multiple class="form-control" id="body_types" name="body_types">
+                {% for body_type in body_types %}
+                    <option>{{ body_type }}</option>
+                {% endfor %}
+            </select>
+            <label class="margin-top" for="transmission">Select Transmission:</label>
+            <select multiple class="form-control" id="transmission" name="transmission">
+                {% for transmission in transmissions %}
+                    <option>{{ transmission }}</option>
+                {% endfor %}
+            </select>
+        <div class="form-row">
+            <div class="col margin-top">
+                <label for="min_price">Min year:</label>
+                <input type="number" id="min_year" name="min_year" class="form-control" placeholder="Min year:">
+            </div>
+            <div class="col margin-top">
+                <label for="max_price">Max year:</label>
+                <input type="number" id="max_year" name="max_year" class="form-control" placeholder="Max year:">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="col margin-top">
+                <label for="min_price">Min price:</label>
+                <input type="number" id="min_price" name="min_price" class="form-control" placeholder="Min price:">
+            </div>
+            <div class="col margin-top">
+                <label for="max_price">Max price:</label>
+                <input type="number" id="max_price" name="max_price" class="form-control" placeholder="Max price:">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="col margin-top">
+                <label for="min_kms">Min kilometers:</label>
+                <input type="number" id="min_kms" name="min_kms" class="form-control" placeholder="Min kilometers:">
+            </div>
+            <div class="col margin-top">
+                <label for="max_kms">Max kilometers:</label>
+                <input type="number" id="max_kms" name="max_kms" class="form-control" placeholder="Max kilometers:">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="margin-top" for="mandatory_keywords">Mandatory keywords:</label>
+            <textarea class="form-control" id="mandatory_keywords" name="mandatory_keywords" rows="3"></textarea>
+        </div>
+        <p>* Mandatory keywords are keywords that must exist in the Kijiji listing.</p>
+        <div class="form-group">
+            <label class="margin-top" for="optional_keywords">Optional keywords:</label>
+            <textarea class="form-control" id="optional_keywords" name="optional_keywords" rows="3"></textarea>
+        </div>
+        <p>* The more optional keywords are in the listing, the higher it'll appear in your results.</p>
+        <div class = "container btn-group">
+            <div class="left_button">
+                <button type="submit" id="submit-button" class="btn btn-outline-light btn-lg btn-block">Continue</button>
+            </div>
+    </form>
+            <div class="right_button">
+                <form action="/pulls/model/{{ pull_id }}">
+                    <input type="submit" class="btn btn-outline-light btn-lg btn-block" value="Back" />
+                    <input type="hidden" value="{{ make }}" name="make"/>
+                </form>
+            </div>
+</div>
+<!-- this label styling comes from: https://getbootstrap.com/docs/4.0/components/forms/ -->
+{% endblock %}

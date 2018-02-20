@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <br />
+    <h2>Your pulls:</h2>
+        <br/>
+        {% if pulls|length > 0 %}
+            {% for pull in pulls %}
+                <div class="post_buttons">
+                    <a href="/editpull/delete/{{ pull._id }}" class="btn btn-danger" role="button" aria-pressed="true">Delete</a>
+                    <a href="/pulls/make/{{ pull._id }}" class="btn btn-secondary" role="button" aria-pressed="true">Edit</a>
+                </div>
+                <h3><a href="/posts/{{ pull._id }}">{{ pull.make }} {{ pull.model }}</h3>
+                <!--<p><b>Pull ID: {{ pull._id }}</b><br>-->
+                <!--<b>Pull URL: {{ pull.url }}<b/><br>-->
+                <b>Body Type(s):</b>
+                    {% if pull.body_types|length > 0 %}
+                        {% for type in pull.body_types %}
+                            {{ type|string() }},
+                        {% endfor %}
+                    {% else %}
+                        --
+                    {% endif %}<br>
+                <b>Transmission Option(s):</b>
+                    {% if pull.transmissions|length > 0 %}
+                        {% for trans in pull.transmissions %}
+                            {{ trans|string() }},
+                        {% endfor %}<br>
+                    {% else %}
+                        --
+                    {% endif %}
+                <b>Min Price:</b> {{ "${:,.2f}".format(pull.min_price|int()) }}
+                <b>Max Price:</b> {{ "${:,.2f}".format(pull.max_price|int()) }}<br>
+                <b>Min Kms:</b> {{ "{:,}".format(pull.min_kms|int()) }}
+                <b>Max Kms:</b> {{ "{:,}".format(pull.max_kms|int()) }}<br>
+                <b>Mandatory Keywords:</b>
+                    {% if pull.mandatory_keywords|length > 0 %}
+                        {% for keyword in pull.mandatory_keywords %}
+                            {{ keyword|string() }},
+                        {% endfor %}
+                    {% else %}
+                        --
+                    {% endif %}<br>
+                <b>Optional Keywords:</b>
+                    {% if pull.optional_keywords|length > 0 %}
+                        {% for keyword in pull.optional_keywords %}
+                            {{ keyword|string() }},
+                        {% endfor %}<br>
+                    {% else %}
+                        --
+                    {% endif %}<br>
+                <b>Date Created:</b>  {{ pull.created_date }}</p>
+                <hr>
+            <!-- <hr> = horizontal rule, basically a line between blogs -->
+            {% endfor %}
+        {% else %}
+            <h4 class="no_posts">You haven't made any pulls yet!</h4>
+        {% endif %}
+        <!-- this is Jinja, allowing us to use a for loop in our HTML, to
+        display each blog individually -->
+</div>
+{% endblock %}

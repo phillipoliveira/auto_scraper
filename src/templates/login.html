@@ -1,0 +1,27 @@
+{% extends "base_nonav.html" %}
+{% block content %}
+<div class="container page-form">
+<!-- this div HAS TWO CLASSES - it is used so we can modify this section's style in our css-->
+    <form id="login-form" action="/auth/login" method="post">
+        <div class="heading">
+            <h2>Login</h2>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input class="form-control" type="text" id="email" name="email" placeholder="Enter email">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <!-- the ID in the label corresponds with the id in the input line -->
+            <input class="form-control" type="password" id="password" name="password" placeholder="Password">
+        </div>
+        <div class="form-button">
+            <button type="submit" id="submit-button" class="btn btn-outline-light btn-lg btn-block">Sign in</button>
+        </div>
+    </form>
+</div>
+<div class="container account_link">
+    <p><b><a href="/register">Don't have an account?</a></b></p>
+</div>
+<!-- this label styling comes from: https://getbootstrap.com/docs/4.0/components/forms/ -->
+{% endblock %}

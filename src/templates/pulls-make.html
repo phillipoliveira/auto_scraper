@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container page-form">
+<!-- this div HAS TWO CLASSES - it is used so we can modify this section's style in our css-->
+    <form id="login-form" action="/pulls/model/{{ pull_id }}">
+        <div class="heading">
+            <h2>Select a make:</h2>
+        </div>
+            <label for="make">Select Make:</label>
+            <select class="form-control" id="make" name="make">
+              {% for make in makes %}
+                  <option>{{ make }}</option>
+              {% endfor %}
+            </select>
+        <div class = "container btn-group">
+            <div class="left_button">
+                <button type="submit" id="submit-button" class="btn btn-outline-light btn-lg btn-block">Continue</button>
+            </div>
+    </form>
+            <div class="right_button">
+                <form action="/pulls">
+                    <input type="submit" class="btn btn-outline-light btn-lg btn-block" value="Back" />
+                </form>
+            </div>
+        </div>
+</div>
+<!-- this label styling comes from: https://getbootstrap.com/docs/4.0/components/forms/ -->
+{% endblock %}
