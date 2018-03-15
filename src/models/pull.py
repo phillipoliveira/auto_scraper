@@ -8,7 +8,8 @@ import datetime
 import uuid
 import requests
 from flask import Flask
-from urlparse import urlparse
+import urllib.parse
+import urllib.request
 from bs4 import BeautifulSoup
 import unidecode
 
@@ -110,6 +111,7 @@ class Pull(object):
             returning_new_posts, returning_price_drops = [], []
             request = requests.get(assigned_url)
             content = request.content
+            print(assigned_url)
             soup = BeautifulSoup(content, "html.parser")
             link_soup = soup.findAll("div", {"class": "clearfix"})
             for link in link_soup:
@@ -209,11 +211,11 @@ class Pull(object):
                     kms = "--"
                 description = post.find("p", {"itemprop": "description"}).text.split('...')[0].strip().split("\n")[
                                   0] + "..."
-                path = urlparse(url).path
-                url_string = unidecode.unidecode(urllib.unquote_plus(path.encode('ascii')).decode('utf8'))
+                path = urllib.parse.urlparse(url).path
+                url_string = unidecode.unidecode(urllib.request.unquote(path))
                 location = ("{}, {}".format(url_string.split("/")[4].title(), url_string.split("/")[5].title()))
                 _id = url.split("/")[6]
-                url = "http://www.autotrader.ca/" + url
+                url = "http://www.autotrader.ca" + url
                 prices = []
                 prices.append(post.find("span", {"class": "price-amount"}).text)
                 date_posted = "--"
@@ -244,7 +246,7 @@ class Pull(object):
                          "description": description, "url": url, "pull_id": self._id})
                 # If it doesn't exist, create it
                 except TypeError:
-                    print("creating post... {}".format(urlparse(title)))
+                    print("creating post... {}".format(urllib.parse.urlparse(title)))
                     post = Post(_id=_id, type="autotrader", location=location, kms=kms, image=image, title=title,
                                 date_posted=date_posted, seller=seller,
                                 prices=prices, transmission=transmission, description=description, url=url,
