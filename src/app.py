@@ -116,6 +116,8 @@ def pull_model(pull_id):
 # Returns the registration page
 def pull_body_type(make, pull_id):
     model = request.args.get('model')
+    model = model.replace(".", "_")
+    print(model)
     body_types, transmissions = Scraping.get_body_types_trans(make, model)
     return render_template('pulls-body_types.html',
                            make=make, model=model,
@@ -127,6 +129,8 @@ def pull_body_type(make, pull_id):
 @app.route('/pulls/final/<string:make>/<string:model>/<string:pull_id>')
 def pull_final(make, model, pull_id):
     body_types = request.args.get('body_types')
+    if body_types == "Select":
+        body_types = ""
     transmissions = request.args.getlist('transmission')
     min_price = request.args.get('min_price')
     max_price = request.args.get('max_price')

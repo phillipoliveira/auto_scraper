@@ -27,7 +27,7 @@ class Emailer(object):
             kms = str(post.kms)
             transmission = str(post.transmission)
             description = str(post.description)
-            print('Emailing regarding this URL: {}, MSG = {}').format(url, passed_msg)
+            print('Emailing regarding this URL: {}, MSG = {}'.format(url, passed_msg))
             msg = MIMEText("{} - {} \n{}\nLocation: {}\nMileage: {}\nTransmission: {} \nDescription: {}".format(title,
                                                                                                               prices0,
                                                                                                               url,

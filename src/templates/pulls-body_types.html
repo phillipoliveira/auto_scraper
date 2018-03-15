@@ -8,6 +8,7 @@
         </div>
             <label for="body_types">You're almost done...:</label>
             <select class="form-control" id="body_types" name="body_types">
+                <option>Select</option>
                 {% for body_type in body_types %}
                     <option>{{ body_type }}</option>
                 {% endfor %}

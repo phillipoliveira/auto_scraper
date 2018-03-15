@@ -75,8 +75,8 @@ class Pull(object):
         r = requests.get(final_url, params=payload)
         if any([(self.min_kms != ""), (self.max_kms != "")]):
             payload_kms = {
-                'attributeFiltersMin[carmileageinkms_i]': min_kms,
-                'attributeFiltersMax[carmileageinkms_i]': max_kms,
+                'attributeFiltersMin[carmileageinkms_i]': self.min_kms,
+                'attributeFiltersMax[carmileageinkms_i]': self.max_kms,
             }
             r_kms = requests.get(r.url, params=payload_kms)
             self.kijiji_url = r_kms.url
@@ -104,6 +104,7 @@ class Pull(object):
         self.autotrader_url = requests.get(base_url, params=payload).url
 
     def generate_kijiji_posts_data(self, new_or_update):
+        print(self.body_types)
         base = "https://www.kijiji.ca"
         new_posts, price_drops = [], []
 

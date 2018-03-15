@@ -269,7 +269,10 @@ class Scraping(object):
         except KeyError:
             kijiji_models_set = []
         models = set(kijiji_models_set + autotrader_models_set)
-        return list(sorted(models))
+        clean_models = []
+        for i in models:
+            clean_models.append(i.replace("_", "."))
+        return list(sorted(clean_models))
 
     @classmethod
     def get_body_types_trans(cls, make, model):
@@ -280,14 +283,14 @@ class Scraping(object):
             autotrader_trans_set = set(
                 data["scraping_dict"][make]["Autotrader"]['models'][model]['transmissions'].keys())
         except KeyError:
-            autotrader_body_types_set = []
-            autotrader_trans_set = []
+            autotrader_body_types_set = set()
+            autotrader_trans_set = set()
         try:
             kijiji_body_types_set = set(data["scraping_dict"][make]["kijiji"]['models'][model]['body_types'].keys())
             kijiji_trans_set = set(data["scraping_dict"][make]["kijiji"]['models'][model]['transmissions'].keys())
         except KeyError:
-            kijiji_body_types_set = []
-            kijiji_trans_set = []
+            kijiji_body_types_set = set()
+            kijiji_trans_set = set()
         if any([(len(kijiji_body_types_set) == 0), (len(autotrader_body_types_set) == 0)]):
             body_types = kijiji_body_types_set.union(autotrader_body_types_set)
             trans = kijiji_trans_set.union(autotrader_trans_set)
