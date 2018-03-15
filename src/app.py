@@ -15,10 +15,12 @@ app.secret_key = "miata"
 @app.route('/')
 # Returns the home page
 def home_template():
-    if session['email'] is None:
-        return render_template('home.html')
-    else:
-        return make_response(start_pull())
+    try:
+        if session['email'] is not None:
+            return make_response(start_pull())
+    except KeyError:
+        return render_template('login.html')
+
 
 @app.route('/login')
 # Returns the login page
@@ -98,7 +100,7 @@ def start_pull():
 # Returns the registration page
 def pull_make(pull_id):
     data = Scraping.dict_from_mongo()
-    makes = sorted(data.keys())
+    makes = sorted(data['scraping_dict'].keys())
     return render_template('pulls-make.html', makes=makes, pull_id=pull_id)
 
 
@@ -106,9 +108,7 @@ def pull_make(pull_id):
 # Returns the registration page
 def pull_model(pull_id):
     make = request.args.get('make')
-    data = Scraping.dict_from_mongo()
-    models = (sorted(data[make].keys()))
-    models.remove('URL')
+    models = Scraping.get_models(make)
     return render_template('pulls-model.html', make=make, models=models, pull_id=pull_id)
 
 
@@ -116,9 +116,7 @@ def pull_model(pull_id):
 # Returns the registration page
 def pull_body_type(make, pull_id):
     model = request.args.get('model')
-    data = Scraping.dict_from_mongo()
-    body_types = sorted((data[make][model]['body_types']).keys())
-    transmissions = sorted((data[make][model]['transmissions']).keys())
+    body_types, transmissions = Scraping.get_body_types_trans(make, model)
     return render_template('pulls-body_types.html',
                            make=make, model=model,
                            body_types=body_types,
@@ -128,7 +126,7 @@ def pull_body_type(make, pull_id):
 
 @app.route('/pulls/final/<string:make>/<string:model>/<string:pull_id>')
 def pull_final(make, model, pull_id):
-    body_types = request.args.getlist('body_types')
+    body_types = request.args.get('body_types')
     transmissions = request.args.getlist('transmission')
     min_price = request.args.get('min_price')
     max_price = request.args.get('max_price')
@@ -158,14 +156,18 @@ def pull_final(make, model, pull_id):
                 mandatory_keywords=mandatory_keywords,
                 optional_keywords=optional_keywords)
     if pull_id is None:
-        pull.generate_url()
+        pull.generate_kijiji_url()
+        pull.generate_autotrader_url()
         pull.save_to_mongo()
+        pull.body_types
     else:
-        pull.generate_url()
+        pull.generate_kijiji_url()
+        pull.generate_autotrader_url()
         old_pull = Pull.from_mongo(pull_id)
         old_pull.update_pull(pull.json())
         pull = old_pull
-    pull.generate_posts_data(new_or_update='new')
+    pull.generate_kijiji_posts_data(new_or_update='new')
+    pull.generate_autotrader_posts_data(new_or_update='new')
     return make_response(start_pull())
 
 @app.route('/posts/<string:pull_id>')
@@ -185,12 +187,12 @@ def change_flags(variable, flag, post_id, template):
         post.update_post(
             {"_id": post._id, "location": post.location, "kms": post.kms, "image": post.image, "title": post.title,
              "date_posted": post.date_posted, "seller": post.seller, "prices": post.prices, "transmission": post.transmission,
-             "description": post.description, "url": post.url, "pull_id": post.pull_id, "hide": post.hide, "star": flag})
+             "description": post.description, "url": post.url, "pull_id": post.pull_id, "hide": post.hide, "star": flag, "type": post.type})
     else:
         post.update_post(
             {"_id": post._id, "location": post.location, "kms": post.kms, "image": post.image, "title": post.title,
              "date_posted": post.date_posted, "seller": post.seller, "prices": post.prices, "transmission": post.transmission,
-             "description": post.description, "url": post.url, "pull_id": post.pull_id, "hide": flag, "star": post.star})
+             "description": post.description, "url": post.url, "pull_id": post.pull_id, "hide": flag, "star": post.star, "type": post.type})
     if template == 'starred_posts.html':
         user = User.get_by_email(session['email'])
         pulls = Pull.find_by_author_id(user.id)
@@ -205,6 +207,12 @@ def change_flags(variable, flag, post_id, template):
         posts = Post.from_mongo(pull._id)
     if template == 'posts.html':
         return make_response(load_posts(pull._id))
+    elif template == 'all_posts.html':
+        return make_response(get_all_posts())
+    elif template == 'starred_posts.html':
+        make_response(starred_posts())
+    elif template == 'price_drops.html':
+        make_response(price_drops())
     else:
         return render_template(template, pull=pull, posts=posts)
 
@@ -220,6 +228,19 @@ def starred_posts():
         except TypeError:
             continue
     return render_template('starred_posts.html', posts=posts)
+
+@app.route('/price_drops')
+def price_drops():
+    user = User.get_by_email(session['email'])
+    pulls = Pull.find_by_author_id(user.id)
+    posts_list = []
+    for pull in pulls:
+        posts = Post.from_mongo(pull._id)
+        for post in posts:
+            if len(post.prices) > 1:
+                posts_list.append(post)
+    return render_template('price_drops.html', posts=posts_list)
+
 
 @app.route('/all_posts')
 def get_all_posts():

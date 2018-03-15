@@ -1,7 +1,7 @@
 import time
 from src.models.pull import Pull
 from src.common.database import Database
-
+from datetime import datetime
 
 class ScheduledTasks(object):
 
@@ -14,8 +14,10 @@ class ScheduledTasks(object):
                 print('checking for expired posts...')
                 pull.delete_expired_posts()
                 print('updating posts...')
-                pull.generate_posts_data(new_or_update='update')
+                pull.generate_kijiji_posts_data(new_or_update='update')
+                pull.generate_autotrader_posts_data(new_or_update='update')
             print("posts refreshed!")
+            print(datetime.utcnow())
         return
 
     @classmethod

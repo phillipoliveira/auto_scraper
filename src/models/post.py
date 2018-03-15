@@ -9,7 +9,7 @@ from pprint import pprint
 
 class Post(object):
     def __init__(self, _id=None, type=None, location=None, kms=None, image=None, title=None, date_posted=None, star=False,
-                 hide=False, prices=None, transmission=None, description=None, url=None, pull_id=None, seller=None,):
+                 hide=False, prices=None, transmission=None, description=None, url=None, pull_id=None, seller="Dealer",):
         self._id = None if _id is None else _id
         self.type = None if type is None else type
         self.pull_id = None if pull_id is None else pull_id
@@ -24,7 +24,7 @@ class Post(object):
         self.kms = None if kms is None else kms
         self.transmission = None if transmission is None else transmission
         self.description = None if description is None else description
-        self.seller = None if seller is None else seller
+        self.seller = "Dealer" if seller is "Dealer" else seller
 
     def json(self):
         return {"_id": self._id,

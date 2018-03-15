@@ -8,6 +8,7 @@
             <div class="media">
                 <img class="align-self-start mr-3" src={{ post.image }}>
             <div class="media-body">
+                <h4 class="mt-0"><a href={{ post.url }}>{{ post.title }}</h4>
                 <div class="post_buttons">
                     <a href="/flags/star/False/{{ post._id }}/starred_posts.html" class="btn btn-success btn-lg" role="button" aria-pressed="true">Un-star</a>
                 </div>
@@ -18,12 +19,12 @@
                         {{ price }}</p>
                     {% endfor %}
                 {% endif %}
-                <b>Location:</b> {{ post.location }}<br>
-                <b>For sale by:</b> {{ post.seller }}<br>
-                <b>Mileage:</b> {{ post.kms }}<br>
-                <b>Date Posted:</b> {{ post.date_posted }}<br>
+                <b>Location:</b> {{ post.location }} --
+                <b> For sale by:</b> {{ post.seller }}<br>
+                <b>Mileage:</b> {{ post.kms }} --
+                <b> Date Posted:</b> {{ post.date_posted }}<br>
                 <b>Transmission:</b> {{ post.transmission }}<br>
-                <br><br>
+                <b>Description:</b> {{ post.description }}<br>
                 <hr>
             </div>
             </div>

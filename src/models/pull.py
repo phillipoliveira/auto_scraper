@@ -1,4 +1,5 @@
-from DateTime import DateTime
+import urllib
+
 from src.common.database import Database
 from src.models.scraping import Scraping
 from src.models.post import Post
@@ -6,8 +7,10 @@ from src.models.emailer import Emailer
 import datetime
 import uuid
 import requests
-from flask import session
+from flask import Flask
+from urlparse import urlparse
 from bs4 import BeautifulSoup
+import unidecode
 
 class Pull(object):
     def __init__(self,
@@ -26,7 +29,8 @@ class Pull(object):
                  max_year="",
                  mandatory_keywords="",
                  optional_keywords="",
-                 url="",
+                 kijiji_url="",
+                 autotrader_url="",
                  created_date=(datetime.datetime.utcnow().strftime('%b, %d, %Y'))):
         self._id = uuid.uuid4().hex if _id is None else _id
         self.type = None if type is None else type
@@ -43,71 +47,67 @@ class Pull(object):
         self.max_year = "" if max_year is "" else max_year
         self.mandatory_keywords = "" if mandatory_keywords is "" else mandatory_keywords
         self.optional_keywords = "" if optional_keywords is "" else optional_keywords
-        self.url = "" if url is "" else url
+        self.kijiji_url = "" if kijiji_url is "" else kijiji_url
+        self.autotrader_url = "" if autotrader_url is "" else autotrader_url
         self.created_date = created_date
 
-    def generate_url(self):
-        base = "https://www.kijiji.ca/b-cars-trucks/ontario/"
-
-        def parse_model(url):
-            split = url.split("ontario/")
-            return (split[1]).split("-", 1)
-        final_url, body_types_len, count = "", len(self.body_types), 0
-        data = Scraping.dict_from_mongo()
-        if len(self.body_types) > 0:
-            for body_type in self.body_types:
-                count += 1
-                result = parse_model(data[self.make][self.model]['body_types'][body_type])
-                if body_types_len == 1:
-                    final_url = final_url + (result[0] + "-" + result[1])
-                else:
-                    if count != body_types_len:
-                        if count == 1:
-                            final_url = final_url + result[0]
-                        else:
-                            final_url = final_url + ("__" + result[0])
-                    elif count == body_types_len:
-                        final_url = final_url + ("__" + result[0] + "-" + result[1])
+    def generate_kijiji_url(self):
+        database = Database()
+        database.initialize()
+        data = database.find_one(collection='scraping', query={})
+        if self.body_types != "":
+            url = data['scraping_dict'][self.make]['kijiji']['models'][self.model]['body_types'][self.body_types]
         else:
-            result = (data[self.make][self.model]['URL']).split("ontario/")
-            final_url = result[1]
-        final_url = base + final_url
+            url = data['scraping_dict'][self.make]['kijiji']['models'][self.model]['url']
+        final_url = "http://www.kijiji.ca" + url
+        trans_nums, trans_dict = [], {'manual': "1", 'automatic': "2", 'other': '3'}
+        for trans in self.transmissions:
+            trans_nums.append(trans_dict[trans.strip().lower()])
         payload = {
             'minPrice': self.min_price,
             'maxPrice': self.max_price,
             'attributeFiltersMin[caryear_i]': self.min_year,
             'attributeFiltersMax[caryear_i]': self.max_year,
-            'keywords': self.mandatory_keywords
-        }
-        payload_kms = {
-            'attributeFiltersMin[carmileageinkms_i]': self.min_kms,
-            'attributeFiltersMax[carmileageinkms_i]': self.max_kms,
+            'keywords': self.mandatory_keywords,
+            'transmission': '__'.join(trans_nums)
         }
         r = requests.get(final_url, params=payload)
-        r_kms = requests.get(r.url, params=payload_kms)
-        if self.transmissions != "":
-            if len(self.transmissions) == 1:
-                trans_num = data[self.make][self.model]['transmissions'][self.transmissions[0]]
-                final_url = str(r_kms.url) + "&transmission=" + str(trans_num)
-            else:
-                count = 0
-                for transmission in self.transmissions:
-                    trans_num = data[self.make][self.model]['transmissions'][transmission]
-                    count += 1
-                    if count == 1:
-                        final_url = str(r_kms.url) + "&transmission=" + str(trans_num)
-                    else:
-                        final_url = final_url + "__" + str(trans_num)
-        self.url = final_url
+        if any([(self.min_kms != ""), (self.max_kms != "")]):
+            payload_kms = {
+                'attributeFiltersMin[carmileageinkms_i]': min_kms,
+                'attributeFiltersMax[carmileageinkms_i]': max_kms,
+            }
+            r_kms = requests.get(r.url, params=payload_kms)
+            self.kijiji_url = r_kms.url
+        else:
+            self.kijiji_url = r.url
 
-    def generate_posts_data(self, new_or_update):
+    def generate_autotrader_url(self):
+        database = Database()
+        database.initialize()
+        data = database.find_one(collection='scraping', query={})
+        base_url = data['scraping_dict'][self.make]['Autotrader']['models'][self.model]['url']
+        try:
+            trans_string = self.transmissions[0]
+            for trans in ["," + i for i in self.transmissions[1:]]:
+                trans_string += trans
+        except IndexError:
+            trans_string = None
+        payload = {
+            'body': self.body_types,
+            'yRng': self.min_year + "," + self.max_year,
+            'trans': trans_string,
+            'pRng': self.min_price + "," + self.max_price,
+            'oRng': self.min_kms + "," + self.max_kms
+        }
+        self.autotrader_url = requests.get(base_url, params=payload).url
+
+    def generate_kijiji_posts_data(self, new_or_update):
         base = "https://www.kijiji.ca"
-        new_posts = []
-        price_drops = []
+        new_posts, price_drops = [], []
 
         def generate_post_data(assigned_url, new_or_update):
-            new_posts = []
-            price_drops = []
+            returning_new_posts, returning_price_drops = [], []
             request = requests.get(assigned_url)
             content = request.content
             soup = BeautifulSoup(content, "html.parser")
@@ -124,9 +124,8 @@ class Pull(object):
                         continue
                     image_html = (link.find("img", {"alt": title}))
                     image = image_html.get('src')
-                    price = (link.find("div", {"class": "price"})).text.lstrip().split("\n")[0]
                     prices = []
-                    prices.append(price)
+                    prices.append((link.find("div", {"class": "price"})).text.lstrip().split("\n")[0])
                     date_posted = link.find("span", {"class": "date-posted"}).text.strip()
                     location_html = link.find("div", {"class": "location"})
                     location = location_html.text.strip().replace(date_posted, "")
@@ -150,14 +149,18 @@ class Pull(object):
                         _id = (_id_html.get('data-adid')).strip()
                         post = Post.from_mongo_post_id(_id)
                         if prices[0] != post.prices[0]:
+                            print(prices[0])
+                            print(post.prices[0])
                             prices = prices + post.prices
+                            print(prices)
+                            print(type(prices))
                             if new_or_update == 'update':
                                 price_drops.append(post)
-                        post.update_post({"_id": _id, "type": "autos", "location": location, "kms": kms, "image": image, "title": title, "date_posted": date_posted,
-                                          "seller": seller, "prices": prices, "transmission": transmission, "description": description, "url": url, "pull_id": self._id})
+                        post.update_post({"_id": _id, "type": "kijiji", "location": location, "kms": kms, "image": image, "title": title, "date_posted": date_posted, "star": post.star,
+                                          "hide": post.hide, "seller": seller, "prices": prices, "transmission": transmission, "description": description, "url": url, "pull_id": self._id})
                 # If it doesn't exist, create it
                     except TypeError:
-                        post = Post(_id=_id, type="autos", location=location, kms=kms, image=image, title=title, date_posted=date_posted, seller=seller,
+                        post = Post(_id=_id, type="kijiji", location=location, kms=kms, image=image, title=title, date_posted=date_posted, seller=seller,
                                     prices=prices, transmission=transmission, description=description, url=url, pull_id=self._id)
                         post.save_to_mongo()
                         if new_or_update == 'update':
@@ -165,15 +168,93 @@ class Pull(object):
             try:
                 next_pge = soup.find("a", {"title": "Next"}).get('href')
                 gen_new_posts, gen_price_drops = generate_post_data(base + next_pge)
-                new_posts = new_posts + gen_new_posts
-                price_drops = price_drops + gen_price_drops
+                returning_new_posts = new_posts + gen_new_posts
+                returning_price_drops = price_drops + gen_price_drops
             except AttributeError:
-                return new_posts, price_drops
+                return returning_new_posts, returning_price_drops
 
-        gen_new_posts, gen_price_drops = generate_post_data(self.url, new_or_update)
-        new_posts = new_posts + gen_new_posts
-        price_drops = price_drops + gen_price_drops
-        Emailer.send_email(self.author_id, new_posts, passed_msg='new_post')
+        returning_new_posts, returning_price_drops = generate_post_data(self.kijiji_url, new_or_update)
+        print("price_drops: {}".format(returning_price_drops))
+        print("new posts: {}".format(returning_new_posts))
+        Emailer.send_email(self.author_id,  returning_new_posts, passed_msg='new_post')
+        Emailer.send_email(self.author_id, returning_price_drops, passed_msg='price_drop')
+
+    def generate_autotrader_posts_data(self, new_or_update):
+        new_posts, price_drops = [], []
+        session = Scraping.generate_session()
+        request = session.get(self.autotrader_url)
+        print(self.autotrader_url)
+        if request.status_code != 200:
+            print("autotrader_autotrader_posts_data() has returned a non-200 response code.")
+            print("Status code: {}".format(request.status_code))
+            print("Cookies: {}".format(session.cookies.get_dict))
+            print("Url attempted: {}".format(self.autotrader_url))
+        else:
+            content = request.content
+            soup = BeautifulSoup(content, "html.parser")
+            results_count = int(soup.find("span", {"class": "at-results-count pull-left"}).text) + 1
+            session.params = {"rcp": results_count}
+            request = session.get(self.autotrader_url)
+            content = request.content
+            soup = BeautifulSoup(content, "html.parser")
+            posts_soup = soup.findAll("div", {"class": lambda L: L and L.startswith('col-xs-12 result-item-inner')})
+            for post in posts_soup:
+                url_html = post.find("a", {"class": "main-photo click"})
+                url = url_html.get('href')
+                image = url_html.find("img").get("data-original")
+                title = post.find("a", {"class": "result-title click"}).text.strip()
+                try:
+                    kms = post.find("div", {"class": "kms"}).text.strip()
+                except AttributeError:
+                    kms = "--"
+                description = post.find("p", {"itemprop": "description"}).text.split('...')[0].strip().split("\n")[
+                                  0] + "..."
+                path = urlparse(url).path
+                url_string = unidecode.unidecode(urllib.unquote_plus(path.encode('ascii')).decode('utf8'))
+                location = ("{}, {}".format(url_string.split("/")[4].title(), url_string.split("/")[5].title()))
+                _id = url.split("/")[6]
+                url = "http://www.autotrader.ca/" + url
+                prices = []
+                prices.append(post.find("span", {"class": "price-amount"}).text)
+                date_posted = "--"
+                transmission = "--"
+                seller_html = post.find("div", {"class": "seller-logo-container"}).findAll(
+                    ("img", {"id": "imgDealerLogo",
+                             "src": "/Images/Shared/blank.png",
+                             "alt": lambda L: L and L.startswith('')}))
+                if len(seller_html) == 0:
+                    seller = "Owner"
+                else:
+                    seller = "Dealer"
+            # Try to find the post in the database by _id
+                try:
+                    post = Post.from_mongo_post_id(_id)
+                    if prices[0] != post.prices[0]:
+                        print(prices[0])
+                        print(post.prices[0])
+                        prices = prices + post.prices
+                        print(prices)
+                        print(type(prices))
+                        if new_or_update == 'update':
+                            price_drops.append(post)
+                    post.update_post(
+                        {"_id": _id, "type": "autotrader", "location": location, "kms": kms, "image": image, "title": title,
+                         "date_posted": date_posted, "star": post.star,
+                         "hide": post.hide, "seller": seller, "prices": prices, "transmission": transmission,
+                         "description": description, "url": url, "pull_id": self._id})
+                # If it doesn't exist, create it
+                except TypeError:
+                    print("creating post... {}".format(urlparse(title)))
+                    post = Post(_id=_id, type="autotrader", location=location, kms=kms, image=image, title=title,
+                                date_posted=date_posted, seller=seller,
+                                prices=prices, transmission=transmission, description=description, url=url,
+                                pull_id=self._id)
+                    post.save_to_mongo()
+                    if new_or_update == 'update':
+                        new_posts.append(post)
+        print("price_drops: {}".format(price_drops))
+        print("new posts: {}".format(new_posts))
+        Emailer.send_email(self.author_id,  new_posts, passed_msg='new_post')
         Emailer.send_email(self.author_id, price_drops, passed_msg='price_drop')
 
     def delete_expired_posts(self):
@@ -181,10 +262,16 @@ class Pull(object):
         for post in posts:
             request = requests.get(post.url)
             content = request.content
-            soup = BeautifulSoup(content, "html.parser")
-            expired_container = soup.find("div", {"class": "expired-ad-container"})
-            if expired_container is not None:
-                post.delete_post()
+            if post.type == "kijiji":
+                soup = BeautifulSoup(content, "html.parser")
+                expired_container = soup.find("div", {"class": "expired-ad-container"})
+                if expired_container is not None:
+                    post.delete_post()
+            elif post.type == "autotrader":
+                soup = BeautifulSoup(content, "html.parser")
+                expired_container = soup.find("div", {"id": "pageNotFoundContainer"})
+                if expired_container is not None:
+                    post.delete_post()
 
     def save_to_mongo(self):
         Database.insert(collection='pulls', data=self.json())
@@ -205,7 +292,8 @@ class Pull(object):
                  "max_year": self.max_year,
                  "mandatory_keywords": self.mandatory_keywords,
                  "optional_keywords": self.optional_keywords,
-                 "url": self.url,
+                 "kijiji_url": self.kijiji_url,
+                 "autotrader_url": self.autotrader_url,
                  "created_date": self.created_date
         }
 

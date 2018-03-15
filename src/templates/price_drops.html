@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <br><br>
+    <h3>Total price-drops: {{ posts|length }}</h3>
+    {% if posts|length > 0 %}
+        {% for post in posts %}
+            {% if post.hide == False %}
+                <div class="media">
+                    <img class="align-self-start mr-3" src={{ post.image }}>
+                <div class="media-body">
+                    <h4 class="mt-0"><a href={{ post.url }}>{{ post.title }}</h4>
+                    {% if post.star == true %}
+                        <div class="post_buttons">
+                            <a href="/flags/star/False/{{ post._id }}/price_drops.html" class="btn btn-success btn-lg" role="button" aria-pressed="true">Un-star</a>
+                        </div>
+                    {% else %}
+                        <div class="post_buttons">
+                            <a href="/flags/star/True/{{ post._id }}/price_drops.html" class="btn btn-success btn-lg" role="button" aria-pressed="true">Star</a>
+                        </div>
+                    {% endif %}
+                    <div class="post_buttons">
+                        <a href="/flags/hide/True/{{ post._id }}/price_drops.html" class="btn btn-danger btn-lg active" role="button" aria-pressed="true">Hide</a>
+                    </div>
+                    <h5><b>Price:</b> {{ post.prices[0] }}</h5>
+                    {% if post.prices|length > 1 %}
+                        <p><b>Price history:</b>
+                        {% for price in post.prices[1:] %}
+                            {{ price }}</p>
+                        {% endfor %}
+                    {% endif %}
+                    <b>Location:</b> {{ post.location }} --
+                    <b> For sale by:</b> {{ post.seller }}<br>
+                    <b>Mileage:</b> {{ post.kms }} --
+                    <b> Date Posted:</b> {{ post.date_posted }}<br>
+                    <b>Transmission:</b> {{ post.transmission }}<br>
+                    <b>Description:</b> {{ post.description }}<br>
+                    <br><br>
+                    <hr>
+                </div>
+                </div>
+            {% endif %}
+        <!-- <hr> = horizontal rule, basically a line between blogs -->
+        {% endfor %}
+    {% else %}
+        <h3 class="no_posts">No price-drops yet!</h3>
+    {% endif %}
+        <h5>Hidden:</h5>
+        {% for post in posts %}
+            {% if post.hide == True %}
+                <div class="post_buttons">
+                    <a href="/flags/hide/False/{{ post._id }}/price_drops.html" class="btn btn-danger btn-sm active" role="button" aria-pressed="true">Show</a>
+                </div>
+                <p><a href={{ post.url }}>{{ post.title }} - {{ post.prices[0] }} - {{ post.kms }} - {{ post.transmission }}</p>
+                <hr>
+            {% endif %}
+        {% endfor %}
+<!-- ('/<string:variable>/<string:flag>/<string:post_id>/<string:template>') -->
+</div>
+{% endblock %}

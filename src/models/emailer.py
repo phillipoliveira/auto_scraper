@@ -18,14 +18,27 @@ class Emailer(object):
         server.ehlo()
         server.login(gmail_user, gmail_password)
         for post in posts:
+            print(post.prices)
+            print(post.prices[0])
             title = str(post.title.encode('ascii', errors='ignore'))
             prices0 = str(post.prices[0])
             url = str(post.url)
+            location = str(post.location)
+            kms = str(post.kms)
+            transmission = str(post.transmission)
+            description = str(post.description)
             print('Emailing regarding this URL: {}, MSG = {}').format(url, passed_msg)
-            msg = MIMEText('{} - {} \n{}'.format(title, prices0, url))
+            msg = MIMEText("{} - {} \n{}\nLocation: {}\nMileage: {}\nTransmission: {} \nDescription: {}".format(title,
+                                                                                                              prices0,
+                                                                                                              url,
+                                                                                                              location,
+                                                                                                              kms,
+                                                                                                              transmission,
+                                                                                                              description))
             if all([(passed_msg == 'new_post'), (user.new_post_email is True)]):
                 msg['Subject'] = 'New post! - {} - {}'.format(title, prices0)
             elif all([(passed_msg == 'price_drop'), (user.price_drop_email is True)]):
+                print(post.prices[1])
                 prices1 = str(post.prices[1])
                 msg['Subject'] = 'Price drop! - {} - {} <-- {}'.format(title, prices0, prices1)
             msg['From'] = fromx

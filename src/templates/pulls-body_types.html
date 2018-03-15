@@ -7,7 +7,7 @@
             <h2>Select a body type:</h2>
         </div>
             <label for="body_types">You're almost done...:</label>
-            <select multiple class="form-control" id="body_types" name="body_types">
+            <select class="form-control" id="body_types" name="body_types">
                 {% for body_type in body_types %}
                     <option>{{ body_type }}</option>
                 {% endfor %}

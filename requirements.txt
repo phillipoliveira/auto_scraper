@@ -5,3 +5,5 @@ uuid==1.30
 DateTime==4.2
 requests==2.18.4
 progressbar==2.3
+fake-useragent==0.1.10
+unidecode
